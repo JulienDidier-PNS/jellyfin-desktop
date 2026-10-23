@@ -27,6 +27,11 @@ public:
   float m_refreshRate;
   bool m_interlaced;
 
+  // Backing store size in pixels, for platforms where it can differ from
+  // m_width/m_height (macOS HiDPI modes). 0 when not applicable.
+  int m_pixelWidth = 0;
+  int m_pixelHeight = 0;
+
   int m_privId;
 
   inline QString getPrettyName()
@@ -35,6 +40,8 @@ public:
 
     name = QString("%1 x%2%3").arg(m_width, 5).arg(m_height, 5).arg((m_interlaced ? "i" : " "));
     name += QString("x %1bpp @%2Hz").arg(m_bitsPerPixel, 2).arg(m_refreshRate);
+    if (m_pixelWidth && (m_pixelWidth != m_width || m_pixelHeight != m_height))
+      name += QString(" (%1x%2 px)").arg(m_pixelWidth).arg(m_pixelHeight);
     return name;
   }
 };

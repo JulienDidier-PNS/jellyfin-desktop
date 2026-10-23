@@ -33,6 +33,14 @@ bool DisplayManagerOSX::initialize()
     return false;
   }
 
+  // Without this option the list omits the HiDPI ("Retina") modes, which are
+  // the ones desktop Macs normally run in, so the current mode is not found.
+  const void* optionKeys[] = { kCGDisplayShowDuplicateLowResolutionModes };
+  const void* optionValues[] = { kCFBooleanTrue };
+  CFDictionaryRef modeOptions = CFDictionaryCreate(nullptr, optionKeys, optionValues, 1,
+                                                   &kCFTypeDictionaryKeyCallBacks,
+                                                   &kCFTypeDictionaryValueCallBacks);
+
   for (uint32_t displayid = 0; displayid < m_osxnumDisplays; displayid++)
   {
     // add the display to the list
@@ -41,7 +49,7 @@ bool DisplayManagerOSX::initialize()
     display->m_name = QString("Display %1").arg(displayid);
     m_displays[display->m_id] = display;
 
-    m_osxDisplayModes[displayid] = CGDisplayCopyAllDisplayModes(m_osxDisplays[displayid], nullptr);
+    m_osxDisplayModes[displayid] = CGDisplayCopyAllDisplayModes(m_osxDisplays[displayid], modeOptions);
     if (!m_osxDisplayModes[displayid])
       continue;
 
@@ -62,6 +70,8 @@ bool DisplayManagerOSX::initialize()
 
       mode->m_height = static_cast<int>(CGDisplayModeGetHeight(displayMode));
       mode->m_width = static_cast<int>(CGDisplayModeGetWidth(displayMode));
+      mode->m_pixelWidth = static_cast<int>(CGDisplayModeGetPixelWidth(displayMode));
+      mode->m_pixelHeight = static_cast<int>(CGDisplayModeGetPixelHeight(displayMode));
       mode->m_refreshRate = static_cast<float>(CGDisplayModeGetRefreshRate(displayMode));
 
       // Assume 32-bit color depth (CGDisplayModeCopyPixelEncoding deprecated in 10.11)
@@ -73,6 +83,8 @@ bool DisplayManagerOSX::initialize()
         mode->m_refreshRate = 60;
     }
   }
+
+  CFRelease(modeOptions);
 
   if (totalModes == 0)
     return false;

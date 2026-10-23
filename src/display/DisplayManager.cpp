@@ -132,9 +132,12 @@ int DisplayManager::findBestMatch(int display, DMMatchMediaInfo& matchInfo)
     weights[candidate->m_id]->m_mode = candidate;
     weights[candidate->m_id]->m_weight = 0;
 
-    // Weight Resolution match
+    // Weight Resolution match (the pixel size check keeps a HiDPI mode from
+    // matching its low resolution twin, which has the same size in points)
     if ((candidate->m_width == currentVideoMode->m_width) &&
         (candidate->m_height == currentVideoMode->m_height) &&
+        (candidate->m_pixelWidth == currentVideoMode->m_pixelWidth) &&
+        (candidate->m_pixelHeight == currentVideoMode->m_pixelHeight) &&
         (candidate->m_bitsPerPixel == currentVideoMode->m_bitsPerPixel))
     {
       weights[candidate->m_id]->m_weight += MATCH_WEIGHT_RES;

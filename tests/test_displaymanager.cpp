@@ -39,6 +39,13 @@ public:
     m_displays[0]->m_videoModes[id] = mode;
   }
 
+  void addPixelMode(int id, int w, int h, int pw, int ph, float hz)
+  {
+    addMode(id, w, h, 32, hz, false);
+    m_displays[0]->m_videoModes[id]->m_pixelWidth = pw;
+    m_displays[0]->m_videoModes[id]->m_pixelHeight = ph;
+  }
+
 private:
   int m_currentMode;
 };
@@ -67,6 +74,7 @@ private slots:
   void testNoSuitableModeReturnsNegative();
   void testFindBestMode();
   void testMultipleRefreshRate();
+  void testHiDPIModeDoesNotMatchLowResolutionTwin();
 };
 
 // Helper function: Populates a DisplayManager with some typical display modes.
@@ -223,6 +231,21 @@ void TestDisplayManager::testMultipleRefreshRate()
   DMMatchMediaInfo match(23.976f, false);
   int best = mgr.findBestMatch(0, match);
   QCOMPARE(best, 0);
+}
+
+void TestDisplayManager::testHiDPIModeDoesNotMatchLowResolutionTwin()
+{
+  // macOS lists HiDPI modes next to low resolution modes with the same size in
+  // points. Switching rate must not drop the display to the blurry low res one.
+  TestableDisplayManager mgr;
+  mgr.addPixelMode(0, 2056, 1329, 4112, 2658, 120.0f);
+  mgr.addPixelMode(1, 2056, 1329, 4112, 2658, 60.0f);
+  mgr.addPixelMode(2, 2056, 1329, 2056, 1329, 47.952f);
+  mgr.setCurrentMode(0);
+
+  DMMatchMediaInfo match(23.976f, false);
+  int best = mgr.findBestMatch(0, match);
+  QVERIFY(best == 0 || best == 1);
 }
 
 QTEST_APPLESS_MAIN(TestDisplayManager)
