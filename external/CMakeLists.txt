@@ -26,6 +26,9 @@ if(USE_STATIC_MPVQT)
     POSITION_INDEPENDENT_CODE ON
     AUTOMOC ON
   )
+  # The private headers (render context access) are only available when
+  # MpvQt is built from the bundled sources
+  target_compile_definitions(MpvQt PUBLIC MPVQT_STATIC_BUILD)
   # Create Qt-style forwarding headers
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/MpvQt/MpvAbstractItem "#include \"mpvabstractitem.h\"\n")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/MpvQt/MpvController "#include \"mpvcontroller.h\"\n")

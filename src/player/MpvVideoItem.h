@@ -17,6 +17,8 @@ public:
     MpvController* controller() { return mpvController(); }
 
 private:
+    void reportSwaps();
+
     PlayerComponent* m_player = nullptr;
 };
 

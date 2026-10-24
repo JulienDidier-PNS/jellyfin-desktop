@@ -2,6 +2,11 @@
 #include "PlayerComponent.h"
 #include <MpvController>
 #include <QDebug>
+#include <QQuickWindow>
+
+#ifdef MPVQT_STATIC_BUILD
+#include "mpvabstractitem_p.h"
+#endif
 
 MpvVideoItem::MpvVideoItem(QQuickItem *parent)
     : MpvAbstractItem(parent)
@@ -14,6 +19,28 @@ MpvVideoItem::MpvVideoItem(QQuickItem *parent)
     // Force desktop OpenGL and disable advanced features for compatibility with older GPUs
     Q_EMIT setProperty("gpu-api", "opengl");
     Q_EMIT setProperty("opengl-es", "no");
+#endif
+
+    // ready() is emitted once the mpv render context exists
+    connect(this, &MpvAbstractItem::ready, this, &MpvVideoItem::reportSwaps);
+}
+
+void MpvVideoItem::reportSwaps()
+{
+#ifdef MPVQT_STATIC_BUILD
+    mpv_render_context* renderContext = d_ptr->m_mpv_gl;
+    if (!renderContext || !window())
+        return;
+
+    // Tell mpv when the window actually presented a frame. Without this mpv
+    // assumes a frame is on screen as soon as it is rendered, so its vsync
+    // timing (display sync modes, frame timing stats) is guessed instead of
+    // measured. Every window swap is reported, including ones that only
+    // updated the web UI: mpv only counts swaps, so extra ones are harmless.
+    // frameSwapped is emitted on the render thread, as report_swap expects.
+    connect(window(), &QQuickWindow::frameSwapped, this, [renderContext]() {
+        mpv_render_context_report_swap(renderContext);
+    }, Qt::DirectConnection);
 #endif
 }
 
